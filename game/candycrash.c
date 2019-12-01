@@ -32,7 +32,6 @@ typedef struct Candy {
 	int type;
 	int active;
 	int highlight;
-	int special;
 } Candy;
 
 typedef struct SoundsVec {
@@ -50,6 +49,51 @@ SoundsVec end2[SIZE_ENDD];
 const int SCREEN_W = N_COLS*SPRITE_W;
 const int SCREEN_H = N_LINHAS*SPRITE_H + INFO_H;
 
+int final_score = 0, plays = 15, min = 5, sec = 0, mlsec = 0, mode = 0, endmode = 1, has_sound = 1, NUM_TYPES = 5, inf_mode = 0, mov_mode = 0;
+char my_score[PREMAX], my_record[PREMAX], my_plays[PREMAX], pressesc[PREMAX], my_time[PREMAX], chartostr[PREMAX];
+char bopt1[PREMAX], bopt2[PREMAX], bopt3[PREMAX], bopt4[PREMAX], bopt5[PREMAX], bopt6[PREMAX], bopt7[PREMAX], bopt8[PREMAX];
+
+ALLEGRO_FONT *size_P;
+ALLEGRO_FONT *size_P_classic;
+ALLEGRO_FONT *size_M;
+ALLEGRO_FONT *size_M_classic;
+ALLEGRO_FONT *size_G;
+
+ALLEGRO_BITMAP *tile_1;
+ALLEGRO_BITMAP *tile_2;
+ALLEGRO_BITMAP *sprite;
+ALLEGRO_BITMAP *sprite_2;
+ALLEGRO_BITMAP *TD_sprite;
+ALLEGRO_BITMAP *uka_uka;
+ALLEGRO_BITMAP *aku_aku;
+ALLEGRO_BITMAP *shadowfix;
+ALLEGRO_BITMAP *tnt;
+ALLEGRO_BITMAP *walking;
+ALLEGRO_BITMAP *waving;
+ALLEGRO_BITMAP *gamover;
+ALLEGRO_BITMAP *fundo_1;
+ALLEGRO_BITMAP *fundo_2;
+ALLEGRO_BITMAP *fundo_3;
+ALLEGRO_BITMAP *fundo_menu;
+ALLEGRO_BITMAP *fundo_frame;
+ALLEGRO_BITMAP *logo;
+
+ALLEGRO_SAMPLE *swipe;
+ALLEGRO_SAMPLE *select_snd;
+ALLEGRO_SAMPLE *error_snd;
+ALLEGRO_SAMPLE *move_snd;
+ALLEGRO_SAMPLE *move_snd_2;
+ALLEGRO_SAMPLE *song;
+ALLEGRO_SAMPLE *soundtrack_1;
+ALLEGRO_SAMPLE *soundtrack_2;
+ALLEGRO_SAMPLE *sadsong;
+ALLEGRO_SAMPLE *lowsong;
+ALLEGRO_SAMPLE_INSTANCE *song_instance;
+ALLEGRO_SAMPLE_INSTANCE *sndtrck_stage_1;
+ALLEGRO_SAMPLE_INSTANCE *sndtrck_stage_2;
+ALLEGRO_SAMPLE_INSTANCE *sadsong_instance;
+ALLEGRO_SAMPLE_INSTANCE *lowsong_instance;
+
 char srcname[PREMAX];
 int srcrecord;
 int tfrecord;
@@ -58,7 +102,7 @@ char buffer[PREMAX];
 char *wname = NULL;
 int wrecord;
 
-int newRecord(char *name, int score, int *record) {
+int handleRecord(char *name, int score, int *record) {
 	FILE *arq = fopen("../records.txt", "r");
 	FILE *temp = fopen("../backup.tmp", "w");
 	int flag_has = 0, retorno = 0, flag_hastemp = 0, temprecord;
@@ -125,49 +169,6 @@ float returnCellW() {
 float returnCellH() {
 	return (float)(SCREEN_H - INFO_H)/N_LINHAS;
 }
-
-// const float CELL_W = (float)SCREEN_W/N_COLS;
-// const float CELL_H = (float)(SCREEN_H - INFO_H)/N_LINHAS;
-
-int final_score = 0, plays = 15, min = 5, sec = 0, mlsec = 0, mode = 0, endmode = 1, has_sound = 1, has_special = 1, NUM_TYPES = 5, inf_mode = 0, mov_mode = 0;
-char my_score[PREMAX], my_record[PREMAX], my_plays[PREMAX], pressesc[PREMAX], my_time[PREMAX], chartostr[PREMAX];
-char bopt1[PREMAX], bopt2[PREMAX], bopt3[PREMAX], bopt4[PREMAX], bopt5[PREMAX], bopt6[PREMAX], bopt7[PREMAX], bopt8[PREMAX];
-
-ALLEGRO_FONT *size_P;
-ALLEGRO_FONT *size_P_classic;
-ALLEGRO_FONT *size_M;
-ALLEGRO_FONT *size_M_classic;
-ALLEGRO_FONT *size_G;
-
-ALLEGRO_BITMAP *tile_1;
-ALLEGRO_BITMAP *tile_2;
-ALLEGRO_BITMAP *sprite;
-ALLEGRO_BITMAP *sprite_2;
-ALLEGRO_BITMAP *tnt;
-ALLEGRO_BITMAP *walking;
-ALLEGRO_BITMAP *waving;
-ALLEGRO_BITMAP *gamover;
-ALLEGRO_BITMAP *fundo_1;
-ALLEGRO_BITMAP *fundo_2;
-ALLEGRO_BITMAP *fundo_menu;
-ALLEGRO_BITMAP *fundo_frame;
-ALLEGRO_BITMAP *logo;
-
-ALLEGRO_SAMPLE *swipe;
-ALLEGRO_SAMPLE *select_snd;
-ALLEGRO_SAMPLE *error_snd;
-ALLEGRO_SAMPLE *move_snd;
-ALLEGRO_SAMPLE *move_snd_2;
-ALLEGRO_SAMPLE *song;
-ALLEGRO_SAMPLE *soundtrack_1;
-ALLEGRO_SAMPLE *soundtrack_2;
-ALLEGRO_SAMPLE *sadsong;
-ALLEGRO_SAMPLE *lowsong;
-ALLEGRO_SAMPLE_INSTANCE *song_instance;
-ALLEGRO_SAMPLE_INSTANCE *sndtrck_stage_1;
-ALLEGRO_SAMPLE_INSTANCE *sndtrck_stage_2;
-ALLEGRO_SAMPLE_INSTANCE *sadsong_instance;
-ALLEGRO_SAMPLE_INSTANCE *lowsong_instance;
 
 void printCandyMType() {
 	int i, j;
@@ -377,9 +378,6 @@ void clearSequences() {
 			}
 		}
 	}
-
-	// if(sound)
-	// 	play_sound_effect();
 }
 
 void swapZeros() {
@@ -583,7 +581,7 @@ void swapCells(int lin1, int col1, int lin2, int col2) {
 	Candy aux = M[lin1][col1];
 	M[lin1][col1] = M[lin2][col2];
 	M[lin2][col2] = aux;
-	if(!inf_mode)
+	if(!inf_mode && !endmode)
 		plays--;
 
 	al_play_sample(swipe, 1.5, 0, 1, ALLEGRO_PLAYMODE_ONCE, 0);
@@ -596,6 +594,15 @@ void draw_menu(ALLEGRO_DISPLAY *display) {
 
 	// Desenha o fundo
 	al_draw_bitmap(fundo_menu, 0, 0, 0);
+}
+
+void draw_scenario_stg3(ALLEGRO_DISPLAY *display) {
+	ALLEGRO_COLOR BKG_COLOR = al_map_rgb(0,0,0);
+	al_set_target_bitmap(al_get_backbuffer(display));
+	al_clear_to_color(BKG_COLOR);
+
+	// Desenha o fundo
+	al_draw_bitmap(fundo_3, 0, 0, 0);
 }
 
 void draw_scenario(ALLEGRO_DISPLAY *display, int stage) {
@@ -729,12 +736,11 @@ void pausa(ALLEGRO_TIMER *timer) {
 // }
 
 int main(int argc, char **argv){
-	// srand(time(NULL));
+	srand(time(NULL));
 
 	ALLEGRO_DISPLAY *display = NULL;
 	ALLEGRO_EVENT_QUEUE *event_queue = NULL;
 	ALLEGRO_TIMER *timer = NULL;
-
 
 	//------------------------Inicio das rotinas de inicializacao----------------------------
 	if(!al_init()) {
@@ -788,12 +794,17 @@ int main(int argc, char **argv){
 	// Carrega a imagem fonte do sprite
 	sprite = al_load_bitmap("../assets/crash-bandicoot-2.bmp");
 	sprite_2 = al_load_bitmap("../assets/coco-bandicoot.bmp");
+	TD_sprite = al_load_bitmap("../assets/crash-3d-sprite.png");
+	uka_uka = al_load_bitmap("../assets/uka_uka.png");
+	aku_aku = al_load_bitmap("../assets/aku_aku.png");
+	shadowfix = al_load_bitmap("../assets/shadowfix.png");
 	tile_1 = al_load_bitmap("../assets/tile_1.png");
 	tile_2 = al_load_bitmap("../assets/tile_2.png");
 	tnt = al_load_bitmap("../assets/tnt.png");
 	gamover = al_load_bitmap("../assets/gameoversprite.bmp");
 	fundo_1 = al_load_bitmap("../assets/background_1.png");
 	fundo_2 = al_load_bitmap("../assets/background_2.png");
+	fundo_3 = al_load_bitmap("../assets/background_3.png");
 	fundo_menu = al_load_bitmap("../assets/background_menu.png");
 	fundo_frame = al_load_bitmap("../assets/background_frame.png");
 	walking = al_load_bitmap("../assets/crash_walking.bmp");
@@ -888,6 +899,17 @@ int main(int argc, char **argv){
 	int frame = 0, frameDelay = 15;
 	int dest_x = 0, dest_y = 0;
 
+	// Variaveis para animacao do estagio 3
+	int spriteStgH = 378, spriteStgW = 206;
+	int maxColStg = 4, currColStg = 0;
+	int srcStg_x = 0, srcStg_y = 0;
+	int destStg_x = 206, destStg_y = SCREEN_H - spriteStgH;
+	int frameStg = 0, frameDelayStg = 5;
+
+	int drawFrom1 = 0, drawFrom2 = 0, drawFrom3 = 0, drawFrom4 = 0;
+	int offsetAku_x = 0, offsetAku_y = 0;
+	int destAku_x = destStg_x, destAku_y = destStg_y;
+
 	// Variaveis para animacao dos sprites do menu
 	int spriteH1 = 44, spriteW1 = 41;
 	int spriteH2 = 49, spriteW2 = 48;
@@ -903,27 +925,27 @@ int main(int argc, char **argv){
 	ALLEGRO_COLOR baseColor1 = al_map_rgb(0,0,0);
 	ALLEGRO_COLOR baseColor2 = al_map_rgb(0,0,0);
 	ALLEGRO_COLOR baseColor3 = al_map_rgb(0,0,0);
-	ALLEGRO_COLOR baseColor4 = al_map_rgb(0,0,0);
+
 	void resetMenu() {
 		spriteH1 = 44; spriteW1 = 41; spriteH2 = 49; spriteW2 = 48; maxCol1 = 19; currCol1 = 0; maxCol2 = 9; currCol2 = 0;
 		src1_x = 0; src1_y = 0; src2_x = 0; src2_y = 0; dest1_x = SCREEN_W/2 - 150; dest1_y = SCREEN_H/2 + 30;
 		dest2_x = SCREEN_W/2 - 150; dest2_y = SCREEN_H/2 + 30; frame1 = 0; frameDelay1 = 3; frame2 = 0; frameDelay2 = 8;
 		walkSprite = 1; waveSprite = 0; spriteCod = 0; spriteDelay = 0; baseColor1 = al_map_rgb(0,0,0); baseColor2 = al_map_rgb(0,0,0);
-		baseColor3 = al_map_rgb(0,0,0); baseColor4 = al_map_rgb(0,0,0);
+		baseColor3 = al_map_rgb(0,0,0);
 	}
 
 	// Variaveis para o menu 2
 	int firstPosX = SCREEN_W/2 + SCREEN_W/4, firstPosY = 160;
 	int bfirstPosY = 160;
-	char opt1[PREMAX][PREMAX], opt2[PREMAX][PREMAX], opt3[PREMAX][PREMAX], opt4[PREMAX][PREMAX], opt5[PREMAX][PREMAX], opt6[PREMAX][PREMAX], opt7[PREMAX][PREMAX], opt8[PREMAX][PREMAX];
+	char opt1[PREMAX][PREMAX], opt2[PREMAX][PREMAX], opt3[PREMAX][PREMAX], opt4[PREMAX][PREMAX], opt5[PREMAX][PREMAX], opt6[PREMAX][PREMAX], opt7[PREMAX][PREMAX];
 	// Opcoes maximas ja subtraidas de 1 por causa do index, menos a opcao 4
-	int maxOpt1 = 1, maxOpt2 = 1, maxOpt3 = 5, maxOpt4 = 26, maxOpt5 = 5, maxOpt6 = 2, maxOpt7 = 2, maxOpt8 = 2;
+	int maxOpt1 = 1, maxOpt2 = 1, maxOpt3 = 5, maxOpt4 = 26, maxOpt5 = 5, maxOpt6 = 2, maxOpt7 = 2;
 	// Essa variavel e quem muda as opcoes, permitindo deixar as opcoes default
-	int count_opt1 = 0, count_opt2 = 1, count_opt3 = 2, count_opt4 = 15, count_opt5 = 3, count_opt6 = 0, count_opt7 = 0, count_opt8 = 0;
+	int count_opt1 = 0, count_opt2 = 1, count_opt3 = 2, count_opt4 = 15, count_opt5 = 3, count_opt6 = 0, count_opt7 = 0;
 	ALLEGRO_COLOR bbaseColor1 = al_map_rgb(255, 255, 255), bbaseColor2 = al_map_rgb(255, 255, 255);
 	ALLEGRO_COLOR bbaseColor3 = al_map_rgb(255, 255, 255), bbaseColor4 = al_map_rgb(255, 255, 255);
 	ALLEGRO_COLOR bbaseColor5 = al_map_rgb(255, 255, 255), bbaseColor6 = al_map_rgb(255, 255, 255);
-	ALLEGRO_COLOR bbaseColor7 = al_map_rgb(255, 255, 255), bbaseColor8 = al_map_rgb(255, 255, 255), bbaseColor9 = al_map_rgb(255, 255, 255);
+	ALLEGRO_COLOR bbaseColor7 = al_map_rgb(255, 255, 255), bbaseColor8 = al_map_rgb(255, 255, 255);
 	strcpy(opt1[0], "Normal");
 	strcpy(opt1[1], "No stages");
 	strcpy(opt2[0], "By Plays");
@@ -942,17 +964,15 @@ int main(int argc, char **argv){
 	strcpy(opt5[5], "Infinity");
 	strcpy(opt6[0], "On");
 	strcpy(opt6[1], "Off");
-	strcpy(opt7[0], "On");
-	strcpy(opt7[1], "Off");
-	strcpy(opt8[0], "Locked");
-	strcpy(opt8[1], "Free");
+	strcpy(opt7[0], "Locked");
+	strcpy(opt7[1], "Free");
 
 	// Geral
 	float sen, cos;
 	int menu = 0, menu2 = 0, putRecord = 1, playing = 0, mustEnd = 0, swapping = 0, score, col_src, lin_src, col_dst, lin_dst, flag_animation = 0, flag_dontrepeat = 0, flag_callonce = 1;
 	int stage1 = 1, stage2 = 0, stage3 = 0;
 
-	// Recorde
+	// Tela de Recorde
 	char letters[36];
 	int i;
 	for(i=0;i<26;i++) {
@@ -1120,8 +1140,8 @@ int main(int argc, char **argv){
 					al_play_sample(move_snd, 1.7, 0, 1, ALLEGRO_PLAYMODE_ONCE, 0);
 				}
 				else {
-					if(firstPosY == 160 + 600)
-						firstPosY = 160 + 480;
+					if(firstPosY == 160 + 500)
+						firstPosY = 160 + 360 + 60;
 
 					firstPosY -= 60;
 					if(firstPosY < 160)
@@ -1134,7 +1154,7 @@ int main(int argc, char **argv){
 				if(!menu2) {
 					dest1_y += 60;
 					dest2_y += 60;
-					if(dest1_y > SCREEN_H/2 + 210) {
+					if(dest1_y > SCREEN_H/2 + 150) {
 						dest1_y -= 60;
 						dest2_y -= 60;
 					}
@@ -1143,8 +1163,8 @@ int main(int argc, char **argv){
 				}
 				else {
 					firstPosY += 60;
-					if(firstPosY > 160 + 420)
-						firstPosY = 160 + 600;
+					if(firstPosY > 160 + 360)
+						firstPosY = 160 + 500;
 
 					al_play_sample(move_snd, 1.7, 0, 1, ALLEGRO_PLAYMODE_ONCE, 0);
 				}
@@ -1185,11 +1205,6 @@ int main(int argc, char **argv){
 						count_opt7--;
 						if(count_opt7 < 0)
 							count_opt7 = 0;
-					}
-					else if(firstPosY == 160 + 60*7) {
-						count_opt8--;
-						if(count_opt8 < 0)
-							count_opt8 = 0;
 					}
 
 					al_play_sample(move_snd_2, 1.7, 0, 1, ALLEGRO_PLAYMODE_ONCE, 0);
@@ -1232,11 +1247,6 @@ int main(int argc, char **argv){
 						if(count_opt7 > maxOpt7)
 							count_opt7 = maxOpt7;
 					}
-					else if(firstPosY == 160 + 60*7) {
-						count_opt8++;
-						if(count_opt8 > maxOpt8)
-							count_opt8 = maxOpt8;
-					}
 
 					al_play_sample(move_snd_2, 1.7, 0, 1, ALLEGRO_PLAYMODE_ONCE, 0);
 				}
@@ -1255,14 +1265,11 @@ int main(int argc, char **argv){
 					else if(dest1_y == SCREEN_H/2 + 150) {
 						spriteCod = 3;
 					}
-					else if(dest1_y == SCREEN_H/2 + 210) {
-						spriteCod = 4;
-					}
 
 					al_play_sample(select_snd, 1, 0, 1, ALLEGRO_PLAYMODE_ONCE, 0);
 				}
 				else {
-					if(firstPosY == 160 + 600) {
+					if(firstPosY == 160 + 500) {
 						if(strcmp(opt1[count_opt1], "Normal") == 0)
 							mode = 0;
 						else
@@ -1314,12 +1321,7 @@ int main(int argc, char **argv){
 						else
 							has_sound = 0;
 
-						if(strcmp(opt7[count_opt7], "On") == 0)
-							has_special = 1;
-						else
-							has_special = 0;
-
-						if(strcmp(opt8[count_opt8], "Locked") == 0)
+						if(strcmp(opt7[count_opt7], "Locked") == 0)
 							mov_mode = 0;
 						else
 							mov_mode = 1;
@@ -1400,12 +1402,12 @@ int main(int argc, char **argv){
 						menu = 0;
 					}
 				}
-				else if(spriteCod == 3) {
+				else if(spriteCod == 2) {
 					spriteDelay++;
 					if(spriteDelay == 30)
 						menu2 = 1;
 				}
-				else if(spriteCod == 4) {
+				else if(spriteCod == 3) {
 					al_stop_sample_instance(song_instance);
 					spriteDelay++;
 					if(spriteDelay == 30) {
@@ -1419,34 +1421,23 @@ int main(int argc, char **argv){
 					baseColor1 = al_map_rgb(255,0,0);
 					baseColor2 = al_map_rgb(0,0,0);
 					baseColor3 = al_map_rgb(0,0,0);
-					baseColor4 = al_map_rgb(0,0,0);
 				}
 				else if(dest1_y ==  SCREEN_H/2 + 90) {
 					baseColor1 = al_map_rgb(0,0,0);
 					baseColor2 = al_map_rgb(255,0,0);
 					baseColor3 = al_map_rgb(0,0,0);
-					baseColor4 = al_map_rgb(0,0,0);
 				}
 				else if(dest1_y ==  SCREEN_H/2 + 150) {
 					baseColor1 = al_map_rgb(0,0,0);
 					baseColor2 = al_map_rgb(0,0,0);
 					baseColor3 = al_map_rgb(255,0,0);
-					baseColor4 = al_map_rgb(0,0,0);
-				}
-				else if(dest1_y ==  SCREEN_H/2 + 210) {
-					baseColor1 = al_map_rgb(0,0,0);
-					baseColor2 = al_map_rgb(0,0,0);
-					baseColor3 = al_map_rgb(0,0,0);
-					baseColor4 = al_map_rgb(255,0,0);
 				}
 
 				al_draw_text(size_M_classic, baseColor1, SCREEN_W/2 - 90, SCREEN_H/2 + 30, 0, "Play Single");
 
-				al_draw_text(size_M_classic, baseColor2, SCREEN_W/2 - 90, SCREEN_H/2 + 90, 0, "Play Versus");
+				al_draw_text(size_M_classic, baseColor2, SCREEN_W/2 - 90, SCREEN_H/2 + 90, 0, "Options");
 
-				al_draw_text(size_M_classic, baseColor3, SCREEN_W/2 - 90, SCREEN_H/2 + 150, 0, "Options");
-
-				al_draw_text(size_M_classic, baseColor4, SCREEN_W/2 - 90, SCREEN_H/2 + 210, 0, "Exit");
+				al_draw_text(size_M_classic, baseColor3, SCREEN_W/2 - 90, SCREEN_H/2 + 150, 0, "Exit");
 
 				al_flip_display();
 			}
@@ -1464,7 +1455,6 @@ int main(int argc, char **argv){
 					bbaseColor6 = al_map_rgb(255, 255, 255);
 					bbaseColor7 = al_map_rgb(255, 255, 255);
 					bbaseColor8 = al_map_rgb(255, 255, 255);
-					bbaseColor9 = al_map_rgb(255, 255, 255);
 				}
 				else if(firstPosY == 160 + 60) {
 					bbaseColor1 = al_map_rgb(255, 255, 255);
@@ -1475,7 +1465,6 @@ int main(int argc, char **argv){
 					bbaseColor6 = al_map_rgb(255, 255, 255);
 					bbaseColor7 = al_map_rgb(255, 255, 255);
 					bbaseColor8 = al_map_rgb(255, 255, 255);
-					bbaseColor9 = al_map_rgb(255, 255, 255);
 				}
 				else if(firstPosY == 160 + 60*2) {
 					bbaseColor1 = al_map_rgb(255, 255, 255);
@@ -1486,7 +1475,6 @@ int main(int argc, char **argv){
 					bbaseColor6 = al_map_rgb(255, 255, 255);
 					bbaseColor7 = al_map_rgb(255, 255, 255);
 					bbaseColor8 = al_map_rgb(255, 255, 255);
-					bbaseColor9 = al_map_rgb(255, 255, 255);
 				}
 				else if(firstPosY == 160 + 60*3) {
 					bbaseColor1 = al_map_rgb(255, 255, 255);
@@ -1497,7 +1485,6 @@ int main(int argc, char **argv){
 					bbaseColor6 = al_map_rgb(255, 255, 255);
 					bbaseColor7 = al_map_rgb(255, 255, 255);
 					bbaseColor8 = al_map_rgb(255, 255, 255);
-					bbaseColor9 = al_map_rgb(255, 255, 255);
 				}
 				else if(firstPosY == 160 + 60*4) {
 					bbaseColor1 = al_map_rgb(255, 255, 255);
@@ -1508,7 +1495,6 @@ int main(int argc, char **argv){
 					bbaseColor6 = al_map_rgb(255, 255, 255);
 					bbaseColor7 = al_map_rgb(255, 255, 255);
 					bbaseColor8 = al_map_rgb(255, 255, 255);
-					bbaseColor9 = al_map_rgb(255, 255, 255);
 				}
 				else if(firstPosY == 160 + 60*5) {
 					bbaseColor1 = al_map_rgb(255, 255, 255);
@@ -1519,7 +1505,6 @@ int main(int argc, char **argv){
 					bbaseColor6 = al_map_rgb(255,0,0);
 					bbaseColor7 = al_map_rgb(255, 255, 255);
 					bbaseColor8 = al_map_rgb(255, 255, 255);
-					bbaseColor9 = al_map_rgb(255, 255, 255);
 				}
 				else if(firstPosY == 160 + 60*6) {
 					bbaseColor1 = al_map_rgb(255, 255, 255);
@@ -1530,9 +1515,8 @@ int main(int argc, char **argv){
 					bbaseColor6 = al_map_rgb(255, 255, 255);
 					bbaseColor7 = al_map_rgb(255,0,0);
 					bbaseColor8 = al_map_rgb(255, 255, 255);
-					bbaseColor9 = al_map_rgb(255, 255, 255);
 				}
-				else if(firstPosY == 160 + 60*7) {
+				else if(firstPosY == 160 + 500) {
 					bbaseColor1 = al_map_rgb(255, 255, 255);
 					bbaseColor2 = al_map_rgb(255, 255, 255);
 					bbaseColor3 = al_map_rgb(255, 255, 255);
@@ -1541,28 +1525,15 @@ int main(int argc, char **argv){
 					bbaseColor6 = al_map_rgb(255, 255, 255);
 					bbaseColor7 = al_map_rgb(255, 255, 255);
 					bbaseColor8 = al_map_rgb(255,0,0);
-					bbaseColor9 = al_map_rgb(255, 255, 255);
-				}
-				else if(firstPosY == 160 + 600) {
-					bbaseColor1 = al_map_rgb(255, 255, 255);
-					bbaseColor2 = al_map_rgb(255, 255, 255);
-					bbaseColor3 = al_map_rgb(255, 255, 255);
-					bbaseColor4 = al_map_rgb(255, 255, 255);
-					bbaseColor5 = al_map_rgb(255, 255, 255);
-					bbaseColor6 = al_map_rgb(255, 255, 255);
-					bbaseColor7 = al_map_rgb(255, 255, 255);
-					bbaseColor8 = al_map_rgb(255, 255, 255);
-					bbaseColor9 = al_map_rgb(255,0,0);
 				}
 
 				al_draw_text(size_M, al_map_rgb(255, 255, 255), firstPosX - SCREEN_W/2 - 150, bfirstPosY, 0, "Play Mode:");
 				al_draw_text(size_M, al_map_rgb(255, 255, 255), firstPosX - SCREEN_W/2 - 150, bfirstPosY + 60, 0, "Type of Endgame:");
-				al_draw_text(size_M, al_map_rgb(255, 255, 255), firstPosX - SCREEN_W/2 - 150, bfirstPosY + 120, 0, "Max Nº of Candies:");
+				al_draw_text(size_M, al_map_rgb(255, 255, 255), firstPosX - SCREEN_W/2 - 150, bfirstPosY + 120, 0, "Max Nº of Crashies:");
 				al_draw_text(size_M, al_map_rgb(255, 255, 255), firstPosX - SCREEN_W/2 - 150, bfirstPosY + 180, 0, "Max Nº of Plays:");
 				al_draw_text(size_M, al_map_rgb(255, 255, 255), firstPosX - SCREEN_W/2 - 150, bfirstPosY + 240, 0, "Max Time:");
 				al_draw_text(size_M, al_map_rgb(255, 255, 255), firstPosX - SCREEN_W/2 - 150, bfirstPosY + 300, 0, "Sound:");
-				al_draw_text(size_M, al_map_rgb(255, 255, 255), firstPosX - SCREEN_W/2 - 150, bfirstPosY + 360, 0, "Special Candies:");
-				al_draw_text(size_M, al_map_rgb(255, 255, 255), firstPosX - SCREEN_W/2 - 150, bfirstPosY + 420, 0, "Movement Mode:");
+				al_draw_text(size_M, al_map_rgb(255, 255, 255), firstPosX - SCREEN_W/2 - 150, bfirstPosY + 360, 0, "Movement Mode:");
 
 				sprintf(bopt1, "< %s >", opt1[count_opt1]);
 				al_draw_text(size_M, bbaseColor1, firstPosX - 120, bfirstPosY, 0, bopt1);
@@ -1581,10 +1552,8 @@ int main(int argc, char **argv){
 				al_draw_text(size_M, bbaseColor6, firstPosX - 120, bfirstPosY + 300, 0, bopt6);
 				sprintf(bopt7, "< %s >", opt7[count_opt7]);
 				al_draw_text(size_M, bbaseColor7, firstPosX - 120, bfirstPosY + 360, 0, bopt7);
-				sprintf(bopt8, "< %s >", opt8[count_opt8]);
-				al_draw_text(size_M, bbaseColor8, firstPosX - 120, bfirstPosY + 420, 0, bopt8);
 
-				al_draw_text(size_M, bbaseColor9, SCREEN_W/2 - 150, bfirstPosY + 600, 0, "Save and Back");
+				al_draw_text(size_M, bbaseColor8, SCREEN_W/2 - 150, bfirstPosY + 500, 0, "Save and Back");
 
 				al_flip_display();
 			}
@@ -1628,8 +1597,53 @@ int main(int argc, char **argv){
 					putRecord = 0;
 					playing = 0;
 				}
+				else if(ev.keyboard.keycode == ALLEGRO_KEY_RIGHT) {
+					destStg_x += 206;
+					if(destStg_x > SCREEN_W-206)
+						destStg_x = SCREEN_W-206;
+					destAku_x = destStg_x;
+				}
+				else if(ev.keyboard.keycode == ALLEGRO_KEY_LEFT) {
+					destStg_x -= 206;
+					if(destStg_x < 0)
+						destStg_x = 0;
+					destAku_x = destStg_x;
+				}
+				else if(ev.keyboard.keycode == ALLEGRO_KEY_SPACE) {
+					if(destStg_x == 0) {}
+					else if(destStg_x == 206) {}
+					else if(destStg_x == 206*2) {}
+					else if(destStg_x == 206*3) {}
+				}
 			}
-			else if(ev.type == ALLEGRO_EVENT_TIMER) {}
+			else if(ev.type == ALLEGRO_EVENT_TIMER) {
+				draw_scenario_stg3(display);
+				al_flip_display();
+
+				al_draw_bitmap(uka_uka, SCREEN_W/2 - 397/2, 120, 0);
+
+				al_draw_bitmap(aku_aku, destAku_x+60, destAku_y, 0);
+				al_flip_display();
+
+				frameStg++;
+				if(frameStg >= frameDelayStg) {
+					frameStg = 0;
+					currColStg++;
+					if(currColStg >= maxColStg)
+						currColStg = 0;
+
+					srcStg_x = currColStg * spriteStgW;
+				}
+
+				al_draw_bitmap(shadowfix, destStg_x-60, destStg_y+260, 0);
+				al_draw_bitmap_region(TD_sprite,
+								srcStg_x, srcStg_y,
+								spriteStgW, spriteStgH,
+								destStg_x, destStg_y,
+								0);
+
+				al_flip_display();
+			}
 			else if(ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
 				menu = 0;
 				playing = 0;
@@ -1849,7 +1863,7 @@ int main(int argc, char **argv){
 				}
 				changeZerosForCandies();
 
-				if(final_score > 70) {
+				if(final_score > 400 && !mode) {
 					stage1 = 0;
 					stage2 = 1;
 				}
@@ -1927,7 +1941,7 @@ int main(int argc, char **argv){
 					sprintf(my_score, "Your final score: %d", final_score);
 					al_draw_text(size_M_classic, al_map_rgb(240,240,250), SCREEN_W/4 + 30, SCREEN_H/4 + SCREEN_H/2 + 30, 0, my_score);
 					if(flag_callonce) {
-						tfrecord = newRecord(srcname, final_score, &srcrecord);
+						tfrecord = handleRecord(srcname, final_score, &srcrecord);
 						flag_callonce = 0;
 					}
 					if(tfrecord) {
@@ -1977,12 +1991,17 @@ int main(int argc, char **argv){
 	al_destroy_event_queue(event_queue);
 	al_destroy_bitmap(sprite);
 	al_destroy_bitmap(sprite_2);
+	al_destroy_bitmap(TD_sprite);
+	al_destroy_bitmap(uka_uka);
+	al_destroy_bitmap(aku_aku);
+	al_destroy_bitmap(shadowfix);
 	al_destroy_bitmap(tnt);
 	al_destroy_bitmap(gamover);
 	al_destroy_bitmap(tile_1);
 	al_destroy_bitmap(tile_2);
 	al_destroy_bitmap(fundo_1);
 	al_destroy_bitmap(fundo_2);
+	al_destroy_bitmap(fundo_3);
 	al_destroy_bitmap(fundo_menu);
 	al_destroy_bitmap(fundo_frame);
 	al_destroy_bitmap(walking);
