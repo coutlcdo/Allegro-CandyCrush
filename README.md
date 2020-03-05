@@ -9,4 +9,4 @@ Place the library's folder one level up from the repo's folder.
 You should also change Makefile paths to match yours if you want to compile the game, alternatively, you can check [Automake](https://github.com/coutlcdo/Automake-Electron).
 
 ## Documentation
-Full documentation (PT-BR) can be found [here](https://www.dropbox.com/h?preview=Docs+LucasTP.pdf).
+Full documentation (PT-BR) can be found [here](https://www.dropbox.com/s/ow00gbbmd0jn6if/Docs%20LucasTP.pdf?dl=0).
